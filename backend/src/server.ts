@@ -1,7 +1,11 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import { Pool } from 'pg';
 import Redis from 'ioredis';
+import { Queue, Worker } from 'bullmq';
 import path from 'path';
 import fs from 'fs';
 import {
@@ -22,15 +26,43 @@ import {
 
 const app = Fastify({ logger: false });
 
-app.register(cors, { origin: true });
+const allowedOrigins = process.env.CORS_ORIGIN
+    ? process.env.CORS_ORIGIN.split(',').map((o) => o.trim()).filter(Boolean)
+    : [];
+
+app.register(cors, {
+    origin: (origin, cb) => {
+        if (
+            !origin ||
+            allowedOrigins.length === 0 ||
+            allowedOrigins.includes('*') ||
+            allowedOrigins.includes(origin) ||
+            /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)
+        ) {
+            cb(null, true);
+            return;
+        }
+        cb(new Error('Not allowed by CORS'), false);
+    },
+    credentials: true,
+});
+
+// Endpoint ligero de healthcheck para Render y monitorización
+app.get('/health', async (_request, reply) => {
+    return reply.status(200).send({
+        status: 'ok',
+        service: 'oogleos-backend',
+        timestamp: new Date().toISOString(),
+    });
+});
 
 // Interceptor de peticiones HTTP para emitir logs en tiempo real hacia Omonitor
 app.addHook('onResponse', async (request, reply) => {
     const rawUrl = request.raw.url || request.url;
     const urlPath = rawUrl.split('?')[0];
 
-    // Ignorar las conexiones SSE continuas para no inundar el stream
-    if (urlPath === '/api/system/stream') return;
+    // Ignorar las conexiones SSE continuas y el healthcheck para no inundar el stream
+    if (urlPath === '/api/system/stream' || urlPath === '/health') return;
 
     const sessionIdHeader = (request.headers['x-session-id'] as string) || '';
     const hash = sessionIdHeader ? generateSessionHash(sessionIdHeader) : '#anon';
@@ -48,26 +80,59 @@ app.addHook('onResponse', async (request, reply) => {
     telemetryEvents.emit('log', logEntry);
 });
 
-// Pool de conexiones a PostgreSQL (Docker puerto 5433 en host o 5432 en red docker)
-const pool = new Pool({
-    host: process.env.DB_HOST || '127.0.0.1',
-    port: parseInt(process.env.DB_PORT || '5433', 10),
-    user: process.env.DB_USER || 'oogle_user',
-    password: process.env.DB_PASSWORD || 'oogle_pass',
-    database: process.env.DB_NAME || 'oogleos_db',
-    max: 20,
-});
+// Pool de conexiones a PostgreSQL (Soporte para DATABASE_URL de Neon con SSL o fallback local Docker)
+const databaseUrl = process.env.DATABASE_URL?.trim();
+const isLocalDatabaseUrl =
+    !databaseUrl ||
+    databaseUrl.includes('localhost') ||
+    databaseUrl.includes('127.0.0.1');
 
-// Cliente de Redis (Docker puerto 6379)
-const redis = new Redis({
-    host: process.env.REDIS_HOST || '127.0.0.1',
-    port: parseInt(process.env.REDIS_PORT || '6379', 10),
-    lazyConnect: true,
-});
+const pool = new Pool(
+    databaseUrl
+        ? {
+              connectionString: databaseUrl,
+              ssl: isLocalDatabaseUrl ? false : { rejectUnauthorized: false },
+              max: 20,
+          }
+        : {
+              host: process.env.DB_HOST || '127.0.0.1',
+              port: parseInt(process.env.DB_PORT || '5433', 10),
+              user: process.env.DB_USER || 'oogle_user',
+              password: process.env.DB_PASSWORD || 'oogle_pass',
+              database: process.env.DB_NAME || 'oogleos_db',
+              max: 20,
+          }
+);
 
-redis.on('error', (err) => {
-    console.error('Error de conexión con Redis:', err.message);
-});
+// Configuración de Redis / Upstash TLS (rediss://) compatible con BullMQ
+const redisUrl = process.env.REDIS_URL?.trim();
+const isTlsRedis = Boolean(redisUrl && redisUrl.startsWith('rediss://'));
+
+function createRedisConnection(lazyConnect = false): Redis {
+    const client = redisUrl
+        ? new Redis(redisUrl, {
+              maxRetriesPerRequest: null,
+              ...(isTlsRedis ? { tls: {} } : {}),
+              lazyConnect,
+          })
+        : new Redis({
+              host: process.env.REDIS_HOST || '127.0.0.1',
+              port: parseInt(process.env.REDIS_PORT || '6379', 10),
+              maxRetriesPerRequest: null,
+              lazyConnect,
+          });
+
+    client.on('error', (err) => {
+        console.error('Error de conexión con Redis:', err.message);
+    });
+
+    return client;
+}
+
+const redis = createRedisConnection(true);
+
+let backgroundQueue: Queue | null = null;
+let backgroundWorker: Worker | null = null;
 
 // TTL para la caché de directorios (60 segundos)
 const CACHE_TTL_SECONDS = 60;
@@ -1044,10 +1109,40 @@ const startServer = async () => {
             CREATE INDEX IF NOT EXISTS idx_fs_name_trgm ON filesystem_nodes USING GIN (name gin_trgm_ops);
         `);
 
-        await redis.connect();
-        console.log('Conectado a Redis.');
-        await app.listen({ port: 3000, host: '0.0.0.0' });
-        console.log('API Core corriendo en http://localhost:3000');
+        try {
+            await redis.connect();
+            console.log('Conectado a Redis.');
+
+            // Iniciar cola y Worker de BullMQ dentro del mismo proceso principal (compatible con contenedor único en Render)
+            backgroundQueue = new Queue('oogleos-jobs', {
+                connection: createRedisConnection(false),
+            });
+
+            backgroundWorker = new Worker(
+                'oogleos-jobs',
+                async (job) => {
+                    if (job.name === 'invalidate-cache') {
+                        await invalidateDirCache();
+                    }
+                    return { processed: true, jobId: job.id };
+                },
+                {
+                    connection: createRedisConnection(false),
+                }
+            );
+
+            backgroundWorker.on('error', (err) => {
+                console.error('Error en Worker de BullMQ:', err.message);
+            });
+
+            console.log('Worker de BullMQ iniciado en el proceso principal.');
+        } catch (redisErr: any) {
+            console.warn('Redis no disponible al iniciar, operando sin caché/cola:', redisErr?.message);
+        }
+
+        const port = parseInt(process.env.PORT || '3000', 10);
+        await app.listen({ port, host: '0.0.0.0' });
+        console.log(`API Core corriendo en http://localhost:${port}`);
     } catch (err) {
         console.error(err);
         process.exit(1);

@@ -1,14 +1,32 @@
-import { Client } from 'pg';
+import dotenv from 'dotenv';
 import path from 'path';
+
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
+dotenv.config();
+
+import { Client } from 'pg';
 import { ensure150PhysicalImages } from '../src/utils/imageGenerator';
 
-const client = new Client({
-  host: '127.0.0.1',
-  port: 5433,
-  user: 'oogle_user',
-  password: 'oogle_pass',
-  database: 'oogleos_db',
-});
+const databaseUrl = process.env.DATABASE_URL?.trim();
+const isLocalDatabaseUrl =
+  !databaseUrl ||
+  databaseUrl.includes('localhost') ||
+  databaseUrl.includes('127.0.0.1');
+
+const client = new Client(
+  databaseUrl
+    ? {
+        connectionString: databaseUrl,
+        ssl: isLocalDatabaseUrl ? false : { rejectUnauthorized: false },
+      }
+    : {
+        host: process.env.DB_HOST || '127.0.0.1',
+        port: parseInt(process.env.DB_PORT || '5433', 10),
+        user: process.env.DB_USER || 'oogle_user',
+        password: process.env.DB_PASSWORD || 'oogle_pass',
+        database: process.env.DB_NAME || 'oogleos_db',
+      }
+);
 
 const DEFAULT_USER_ID = '00000000-0000-0000-0000-000000000001';
 const TARGET_TOTAL = 100000;
