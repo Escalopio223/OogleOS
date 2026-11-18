@@ -102,11 +102,11 @@ onUnmounted(() => {
             zIndex: winState.zIndex,
           }
     "
-    @mousedown="winStore.focusWindow('oplanner')"
+    @pointerdown="winStore.focusWindow('oplanner')"
     @click="showExportMenu = false"
   >
     <!-- Cabecera de la Ventana -->
-    <header class="glass-header" @mousedown="startDrag($event, winState.isMaximized)" @dblclick="handleHeaderDoubleClick">
+    <header class="glass-header" @pointerdown="startDrag($event, winState.isMaximized)" @dblclick="handleHeaderDoubleClick">
       <div class="header-left">
         <img :src="oplannerSvg" alt="Oplanner" class="header-icon" />
         <div class="project-info">
@@ -296,9 +296,9 @@ onUnmounted(() => {
     </main>
 
     <!-- Tiradores de Redimensionado -->
-    <div v-if="!winState.isMaximized" class="resize-handle handle-e" @mousedown="startResize($event, 'e', winState.isMaximized)"></div>
-    <div v-if="!winState.isMaximized" class="resize-handle handle-s" @mousedown="startResize($event, 's', winState.isMaximized)"></div>
-    <div v-if="!winState.isMaximized" class="resize-handle handle-se" @mousedown="startResize($event, 'se', winState.isMaximized)"></div>
+    <div v-if="!winState.isMaximized" class="resize-handle handle-e" @pointerdown="startResize($event, 'e', winState.isMaximized)"></div>
+    <div v-if="!winState.isMaximized" class="resize-handle handle-s" @pointerdown="startResize($event, 's', winState.isMaximized)"></div>
+    <div v-if="!winState.isMaximized" class="resize-handle handle-se" @pointerdown="startResize($event, 'se', winState.isMaximized)"></div>
   </div>
 </template>
 

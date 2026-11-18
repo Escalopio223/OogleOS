@@ -215,22 +215,22 @@ function handleDoubleClickHeader(e: MouseEvent) {
             zIndex: winState.zIndex
           }
     "
-    @mousedown="winStore.focusWindow('onotes')"
+    @pointerdown="winStore.focusWindow('onotes')"
   >
     <!-- Tiradores Resize -->
     <template v-if="!winState.isMaximized">
-      <div class="resize-handle n" @mousedown="startResize($event, 'n', winState.isMaximized)"></div>
-      <div class="resize-handle s" @mousedown="startResize($event, 's', winState.isMaximized)"></div>
-      <div class="resize-handle e" @mousedown="startResize($event, 'e', winState.isMaximized)"></div>
-      <div class="resize-handle w" @mousedown="startResize($event, 'w', winState.isMaximized)"></div>
-      <div class="resize-handle ne" @mousedown="startResize($event, 'ne', winState.isMaximized)"></div>
-      <div class="resize-handle nw" @mousedown="startResize($event, 'nw', winState.isMaximized)"></div>
-      <div class="resize-handle se" @mousedown="startResize($event, 'se', winState.isMaximized)"></div>
-      <div class="resize-handle sw" @mousedown="startResize($event, 'sw', winState.isMaximized)"></div>
+      <div class="resize-handle n" @pointerdown="startResize($event, 'n', winState.isMaximized)"></div>
+      <div class="resize-handle s" @pointerdown="startResize($event, 's', winState.isMaximized)"></div>
+      <div class="resize-handle e" @pointerdown="startResize($event, 'e', winState.isMaximized)"></div>
+      <div class="resize-handle w" @pointerdown="startResize($event, 'w', winState.isMaximized)"></div>
+      <div class="resize-handle ne" @pointerdown="startResize($event, 'ne', winState.isMaximized)"></div>
+      <div class="resize-handle nw" @pointerdown="startResize($event, 'nw', winState.isMaximized)"></div>
+      <div class="resize-handle se" @pointerdown="startResize($event, 'se', winState.isMaximized)"></div>
+      <div class="resize-handle sw" @pointerdown="startResize($event, 'sw', winState.isMaximized)"></div>
     </template>
 
     <!-- Header -->
-    <header class="window-header" @mousedown="startDrag($event, winState.isMaximized)" @dblclick="handleDoubleClickHeader">
+    <header class="window-header" @pointerdown="startDrag($event, winState.isMaximized)" @dblclick="handleDoubleClickHeader">
       <div class="window-title">
         <img :src="onotesSvg" alt="Onotes" class="onotes-icon" />
         <span>{{ noteName }} {{ isSaved ? '' : '*' }} — Onotes</span>

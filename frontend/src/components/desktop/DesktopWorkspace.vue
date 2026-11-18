@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { ref, nextTick, onUnmounted, useTemplateRef } from 'vue';
+import { ref, nextTick, onMounted, onUnmounted, watch, useTemplateRef } from 'vue';
 import { useWindowStore } from '@/stores/windowStore';
-import { useDesktopStore, type DesktopItem } from '@/stores/desktopStore';
+import { useDesktopStore, DEFAULT_SYSTEM_APP_POSITIONS, type DesktopItem } from '@/stores/desktopStore';
 import { useFileSystemStore, notifyFilesystemChanged } from '@/stores/filesystem';
 import { useCustomizationStore } from '@/stores/customizationStore';
+import { useDevice } from '@/composables/useDevice';
 import { apiUrl } from '@/config/api';
 import OxplorerWindow from '@/components/apps/oxplorer/OxplorerWindow.vue';
 import OnotesWindow from '@/components/apps/onotes/OnotesWindow.vue';
@@ -29,6 +30,7 @@ const winStore = useWindowStore();
 const desktopStore = useDesktopStore();
 const fs = useFileSystemStore();
 const customStore = useCustomizationStore();
+const { isMobile, isTouch, viewportWidth, updateDeviceMetrics } = useDevice();
 const workspaceRef = useTemplateRef<HTMLElement>('workspaceRef');
 
 // --- CONSTANTES DE CUADRÍCULA ESTILO WINDOWS (Snap to Grid) ---
@@ -221,13 +223,44 @@ function findFolderUnder(x: number, y: number, excludeId: string): DesktopItem |
   return null;
 }
 
-// Auto-reorganizar cuadrícula completa (Estilo Windows Auto-Arrange)
-async function reorganizeGrid() {
-  const { maxRows } = getDesktopBounds();
+// Auto-reorganizar cuadrícula completa (Estilo Windows en escritorio, distribución por filas de 3-4 columnas en móvil)
+async function reorganizeGrid(persistBackend = true) {
+  const { maxCols, maxRows } = getDesktopBounds();
+
+  if (isMobile.value) {
+    const mobileCols = Math.min(4, Math.max(3, maxCols));
+    let idx = 0;
+
+    for (const app of appShortcuts.value) {
+      const c = idx % mobileCols;
+      const r = Math.floor(idx / mobileCols);
+      app.x = GRID_OFFSET_X + c * GRID_CELL_WIDTH;
+      app.y = GRID_OFFSET_Y + r * GRID_CELL_HEIGHT;
+      desktopStore.setSystemAppPosition(app.id, app.x, app.y);
+      idx++;
+    }
+
+    for (const item of desktopStore.items) {
+      const c = idx % mobileCols;
+      const r = Math.floor(idx / mobileCols);
+      const targetX = GRID_OFFSET_X + c * GRID_CELL_WIDTH;
+      const targetY = GRID_OFFSET_Y + r * GRID_CELL_HEIGHT;
+      item.x = targetX;
+      item.y = targetY;
+      item.pos_x = targetX;
+      item.pos_y = targetY;
+      if (persistBackend) {
+        await desktopStore.updatePosition(item.id, targetX, targetY);
+      }
+      idx++;
+    }
+    return;
+  }
+
   let col = 0;
   let row = 0;
 
-  // 1. Organizar accesos de aplicaciones
+  // 1. Organizar accesos de aplicaciones en escritorio
   for (const app of appShortcuts.value) {
     app.x = GRID_OFFSET_X + col * GRID_CELL_WIDTH;
     app.y = GRID_OFFSET_Y + row * GRID_CELL_HEIGHT;
@@ -243,7 +276,13 @@ async function reorganizeGrid() {
   for (const item of desktopStore.items) {
     const targetX = GRID_OFFSET_X + col * GRID_CELL_WIDTH;
     const targetY = GRID_OFFSET_Y + row * GRID_CELL_HEIGHT;
-    await desktopStore.updatePosition(item.id, targetX, targetY);
+    item.x = targetX;
+    item.y = targetY;
+    item.pos_x = targetX;
+    item.pos_y = targetY;
+    if (persistBackend) {
+      await desktopStore.updatePosition(item.id, targetX, targetY);
+    }
     row++;
     if (row >= maxRows) {
       row = 0;
@@ -252,18 +291,80 @@ async function reorganizeGrid() {
   }
 }
 
-// --- EVENTOS DE ARRASTRE DE ELEMENTOS ---
+// Ajuste automático de cuadrícula al entrar o salir de modo móvil (< 768px)
+function syncViewportGridLayout() {
+  if (isMobile.value) {
+    reorganizeGrid(false);
+  } else {
+    for (const app of appShortcuts.value) {
+      const def = DEFAULT_SYSTEM_APP_POSITIONS[app.id];
+      if (def) {
+        app.x = def.x;
+        app.y = def.y;
+        desktopStore.setSystemAppPosition(app.id, def.x, def.y);
+      }
+    }
+  }
+}
+
+let workspaceResizeObserver: ResizeObserver | null = null;
+
+onMounted(() => {
+  updateDeviceMetrics();
+  if (isMobile.value) {
+    syncViewportGridLayout();
+  }
+  if (typeof ResizeObserver !== 'undefined' && workspaceRef.value) {
+    workspaceResizeObserver = new ResizeObserver(() => {
+      updateDeviceMetrics();
+      if (isMobile.value) {
+        reorganizeGrid(false);
+      }
+    });
+    workspaceResizeObserver.observe(workspaceRef.value);
+  }
+});
+
+watch(
+  () => [isMobile.value, viewportWidth.value, desktopStore.items.length],
+  () => {
+    if (isMobile.value) {
+      reorganizeGrid(false);
+    }
+  }
+);
+
+watch(
+  () => isMobile.value,
+  (mobile) => {
+    if (!mobile) {
+      syncViewportGridLayout();
+    }
+  }
+);
+
+// --- EVENTOS DE ARRASTRE Y DOUBLE-TAP (Pointer Events + Mouse Fallback) ---
+let lastTapId: string | null = null;
+let lastTapTime = 0;
+
 function cleanupDragListeners() {
+  window.removeEventListener('pointermove', onGlobalMouseMove);
+  window.removeEventListener('pointerup', onGlobalMouseUp);
+  window.removeEventListener('pointercancel', onGlobalMouseUp);
   window.removeEventListener('mousemove', onGlobalMouseMove);
   window.removeEventListener('mouseup', onGlobalMouseUp);
 }
 
 onUnmounted(() => {
   cleanupDragListeners();
+  if (workspaceResizeObserver) {
+    workspaceResizeObserver.disconnect();
+    workspaceResizeObserver = null;
+  }
 });
 
-function startItemDrag(e: MouseEvent, id: string, currentX: number, currentY: number) {
-  if (e.button !== 0) return;
+function startItemDrag(e: PointerEvent | MouseEvent, id: string, currentX: number, currentY: number) {
+  if ('button' in e && e.button !== 0 && e.button !== undefined) return;
   if (editingItemId.value === id) return;
 
   cleanupDragListeners();
@@ -280,11 +381,14 @@ function startItemDrag(e: MouseEvent, id: string, currentX: number, currentY: nu
   initialTargetX = snappedStart.x;
   initialTargetY = snappedStart.y;
 
+  window.addEventListener('pointermove', onGlobalMouseMove, { passive: false });
+  window.addEventListener('pointerup', onGlobalMouseUp);
+  window.addEventListener('pointercancel', onGlobalMouseUp);
   window.addEventListener('mousemove', onGlobalMouseMove);
   window.addEventListener('mouseup', onGlobalMouseUp);
 }
 
-function onGlobalMouseMove(e: MouseEvent) {
+function onGlobalMouseMove(e: PointerEvent | MouseEvent) {
   if (!activeDragId.value) return;
 
   const deltaX = e.clientX - startPointerX;
@@ -296,6 +400,9 @@ function onGlobalMouseMove(e: MouseEvent) {
   }
 
   if (!isActuallyDragging.value) return;
+  if (e.cancelable && 'pointerType' in e && e.pointerType === 'touch') {
+    e.preventDefault();
+  }
 
   const { maxW, maxH } = getDesktopBounds();
   const nextX = Math.min(Math.max(12, initialTargetX + deltaX), maxW);
@@ -375,7 +482,7 @@ function onGlobalMouseMove(e: MouseEvent) {
   isCurrentlyColliding.value = isGridSlotOccupied(snapped.col, snapped.row, activeDragId.value);
 }
 
-async function onGlobalMouseUp() {
+async function onGlobalMouseUp(e?: PointerEvent | MouseEvent) {
   cleanupDragListeners();
   document.querySelectorAll('.is-drop-hover').forEach((el) => el.classList.remove('is-drop-hover'));
 
@@ -391,6 +498,31 @@ async function onGlobalMouseUp() {
   hoverGridSlot.value = null;
   dragPreviewPos.value = null;
   isCurrentlyColliding.value = false;
+
+  // Gestor de Double-Tap (< 300ms) en pantallas táctiles y toque directo en móvil (< 768px)
+  if (id && !wasDragging) {
+    const isTouchEvent = (e && 'pointerType' in e && e.pointerType === 'touch') || isTouch.value || isMobile.value;
+    if (isTouchEvent) {
+      const now = Date.now();
+      const isDoubleTap = lastTapId === id && now - lastTapTime < 300;
+      lastTapId = id;
+      lastTapTime = now;
+
+      if (isDoubleTap || isMobile.value) {
+        const appTarget = appShortcuts.value.find((a) => a.id === id);
+        if (appTarget) {
+          handleAppShortcutDoubleClick(appTarget);
+          return;
+        }
+        const targetItem = desktopStore.items.find((i) => i.id === id);
+        if (targetItem && editingItemId.value !== id) {
+          handleItemDoubleClick(targetItem);
+          return;
+        }
+      }
+    }
+    return;
+  }
 
   if (id && wasDragging && finalPreview) {
     const rawPos = snapToGridCoords(finalPreview.x, finalPreview.y);
@@ -854,7 +986,7 @@ async function onDropOnFolderIcon(e: DragEvent, targetFolderId: string) {
         'is-overlapping': isActuallyDragging && activeDragId === app.id && isCurrentlyColliding
       }"
       :style="getAppStyle(app)"
-      @mousedown="startItemDrag($event, app.id, app.x, app.y)"
+      @pointerdown="startItemDrag($event, app.id, app.x, app.y)"
       @dragstart.prevent
       @dblclick="handleAppShortcutDoubleClick(app)"
     >
@@ -875,7 +1007,7 @@ async function onDropOnFolderIcon(e: DragEvent, targetFolderId: string) {
       :data-id="item.id"
       :data-is-dir="item.is_directory ? 'true' : 'false'"
       :style="getItemStyle(item)"
-      @mousedown="startItemDrag($event, item.id, item.x ?? 112, item.y ?? 116)"
+      @pointerdown="startItemDrag($event, item.id, item.x ?? 112, item.y ?? 116)"
       @dragstart.prevent
       @dblclick="handleItemDoubleClick(item)"
       @contextmenu="onItemRightClick($event, item)"
@@ -1040,11 +1172,19 @@ async function onDropOnFolderIcon(e: DragEvent, targetFolderId: string) {
 .desktop-workspace {
   flex: 1;
   position: relative;
+  background-color: #1b1f29;
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
   overflow: hidden;
   transition: background 0.25s ease-out;
+}
+
+@media (max-width: 767px) and (orientation: portrait) {
+  .desktop-workspace {
+    background-size: contain !important;
+    background-position: center center !important;
+  }
 }
 
 .grid-ghost-cell {

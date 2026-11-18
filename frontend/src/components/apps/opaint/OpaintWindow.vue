@@ -20,7 +20,7 @@ const winState = winStore.windows['opaint'];
 // Dimensiones y límites de la ventana flotante en el escritorio
 const { x, y, width, height, startDrag, startResize } = useWindowBounds(120, 50, 920, 620);
 
-const layersPanelOpen = ref(true);
+const layersPanelOpen = ref(typeof window !== 'undefined' ? window.innerWidth >= 768 : true);
 const exportModalOpen = ref(false);
 
 function handleClose() {
@@ -194,10 +194,10 @@ onUnmounted(() => {
       height: winState.isMaximized ? 'calc(100% - 40px)' : `${height}px`,
       zIndex: winState.zIndex,
     }"
-    @mousedown="handleFocus"
+    @pointerdown="handleFocus"
   >
     <!-- Barra de Título y Controles de Ventana -->
-    <header class="window-titlebar" @mousedown="startDrag($event, winState.isMaximized)">
+    <header class="window-titlebar" @pointerdown="startDrag($event, winState.isMaximized)">
       <div class="titlebar-left">
         <img :src="opaintSvg" alt="Opaint" class="app-icon" draggable="false" />
         <span class="window-title">
@@ -249,11 +249,11 @@ onUnmounted(() => {
 
     <!-- Puntos de redimensión (Resize Handles) -->
     <template v-if="!winState.isMaximized">
-      <div class="resize-handle rh-e" @mousedown.stop="startResize($event, 'e')" />
-      <div class="resize-handle rh-s" @mousedown.stop="startResize($event, 's')" />
-      <div class="resize-handle rh-se" @mousedown.stop="startResize($event, 'se')" />
-      <div class="resize-handle rh-w" @mousedown.stop="startResize($event, 'w')" />
-      <div class="resize-handle rh-sw" @mousedown.stop="startResize($event, 'sw')" />
+      <div class="resize-handle rh-e" @pointerdown.stop="startResize($event, 'e')" />
+      <div class="resize-handle rh-s" @pointerdown.stop="startResize($event, 's')" />
+      <div class="resize-handle rh-se" @pointerdown.stop="startResize($event, 'se')" />
+      <div class="resize-handle rh-w" @pointerdown.stop="startResize($event, 'w')" />
+      <div class="resize-handle rh-sw" @pointerdown.stop="startResize($event, 'sw')" />
     </template>
   </div>
 </template>

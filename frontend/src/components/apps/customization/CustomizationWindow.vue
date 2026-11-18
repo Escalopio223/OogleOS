@@ -50,10 +50,10 @@ function selectFont(id: string) {
       height: winStore.windows['customization']?.isMaximized ? 'calc(100% - 50px)' : `${height}px`,
       zIndex: winStore.windows['customization']?.zIndex,
     }"
-    @mousedown="winStore.focusWindow('customization')"
+    @pointerdown="winStore.focusWindow('customization')"
   >
     <!-- Barra superior de la ventana -->
-    <header class="window-header" @mousedown="startDrag($event, Boolean(winStore.windows['customization']?.isMaximized))">
+    <header class="window-header" @pointerdown="startDrag($event, Boolean(winStore.windows['customization']?.isMaximized))">
       <div class="window-title-group">
         <img :src="customizationSvg" alt="Personalización" class="window-icon" draggable="false" />
         <span class="window-title">Personalización del Sistema</span>
@@ -311,7 +311,7 @@ function selectFont(id: string) {
     </div>
 
     <!-- Tirador de redimensionado -->
-    <div class="window-resize-handle" @mousedown="startResize($event, 'se', Boolean(winStore.windows['customization']?.isMaximized))"></div>
+    <div class="window-resize-handle" @pointerdown="startResize($event, 'se', Boolean(winStore.windows['customization']?.isMaximized))"></div>
   </div>
 </template>
 

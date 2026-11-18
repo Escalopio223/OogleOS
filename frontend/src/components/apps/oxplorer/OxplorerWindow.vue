@@ -45,6 +45,21 @@ function onFileDragStart(e: DragEvent, item: any) {
   }
 }
 
+let lastCardTapId: string | null = null;
+let lastCardTapTime = 0;
+
+function handleCardPointerUp(e: PointerEvent, item: any) {
+  if (e.pointerType === 'touch' || (typeof window !== 'undefined' && window.innerWidth < 768)) {
+    const now = Date.now();
+    const isDoubleTap = lastCardTapId === item.id && now - lastCardTapTime < 300;
+    lastCardTapId = item.id;
+    lastCardTapTime = now;
+    if (isDoubleTap || (typeof window !== 'undefined' && window.innerWidth < 768)) {
+      handleItemDoubleClick(item);
+    }
+  }
+}
+
 // Abrir carpetas en Oxplorer o abrir archivos en sus apps correspondientes
 function handleItemDoubleClick(item: any) {
   if (item.is_directory) {
@@ -559,25 +574,25 @@ onMounted(() => {
             zIndex: winState.zIndex
           }
     "
-    @mousedown="winStore.focusWindow('oxplorer')"
+    @pointerdown="winStore.focusWindow('oxplorer')"
     @click="closeAllMenus"
   >
     <!-- Tiradores de Redimensionamiento (Bordes y Esquinas) -->
     <template v-if="!winState.isMaximized">
-      <div class="resize-handle n" @mousedown="startResize($event, 'n', winState.isMaximized)"></div>
-      <div class="resize-handle s" @mousedown="startResize($event, 's', winState.isMaximized)"></div>
-      <div class="resize-handle e" @mousedown="startResize($event, 'e', winState.isMaximized)"></div>
-      <div class="resize-handle w" @mousedown="startResize($event, 'w', winState.isMaximized)"></div>
-      <div class="resize-handle ne" @mousedown="startResize($event, 'ne', winState.isMaximized)"></div>
-      <div class="resize-handle nw" @mousedown="startResize($event, 'nw', winState.isMaximized)"></div>
-      <div class="resize-handle se" @mousedown="startResize($event, 'se', winState.isMaximized)"></div>
-      <div class="resize-handle sw" @mousedown="startResize($event, 'sw', winState.isMaximized)"></div>
+      <div class="resize-handle n" @pointerdown="startResize($event, 'n', winState.isMaximized)"></div>
+      <div class="resize-handle s" @pointerdown="startResize($event, 's', winState.isMaximized)"></div>
+      <div class="resize-handle e" @pointerdown="startResize($event, 'e', winState.isMaximized)"></div>
+      <div class="resize-handle w" @pointerdown="startResize($event, 'w', winState.isMaximized)"></div>
+      <div class="resize-handle ne" @pointerdown="startResize($event, 'ne', winState.isMaximized)"></div>
+      <div class="resize-handle nw" @pointerdown="startResize($event, 'nw', winState.isMaximized)"></div>
+      <div class="resize-handle se" @pointerdown="startResize($event, 'se', winState.isMaximized)"></div>
+      <div class="resize-handle sw" @pointerdown="startResize($event, 'sw', winState.isMaximized)"></div>
     </template>
 
     <!-- Cabecera Arrastrable con Doble Clic para Maximizar/Restaurar -->
     <header
       class="window-header"
-      @mousedown="startDrag($event, winState.isMaximized)"
+      @pointerdown="startDrag($event, winState.isMaximized)"
       @dblclick="handleHeaderDoubleClick"
     >
       <div class="window-title">
@@ -586,7 +601,7 @@ onMounted(() => {
         <span class="path-chip">{{ fs.currentFolder?.path || 'root' }}</span>
       </div>
 
-      <div class="header-right" @mousedown.stop @dblclick.stop>
+      <div class="header-right" @pointerdown.stop @mousedown.stop @dblclick.stop>
         <div class="perf-stats">
           <span class="perf-badge latency">
             <span class="dot"></span>
@@ -700,6 +715,7 @@ onMounted(() => {
         :data-is-dir="item.is_directory ? 'true' : 'false'"
         draggable="true"
         @dragstart="onFileDragStart($event, item)"
+        @pointerup="handleCardPointerUp($event, item)"
         @dblclick="handleItemDoubleClick(item)"
         @contextmenu.stop.prevent="onItemContextMenu($event, item)"
         @dragover.prevent

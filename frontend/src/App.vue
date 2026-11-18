@@ -37,12 +37,130 @@ html,
 body,
 #app {
   width: 100%;
-  height: 100%;
+  height: 100vh;
+  height: 100dvh;
   overflow: hidden;
   user-select: none;
   font-family: var(--os-font-family, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Control de gestos táctiles en barras de título y tiradores de redimensionado */
+.window-header,
+.window-titlebar,
+.glass-header,
+.resize-handle,
+.window-resize-handle {
+  touch-action: none;
+}
+
+/* =========================================================
+   ADAPTACIÓN RESPONSIVE Y MÓVIL (< 768px)
+   ========================================================= */
+@media (max-width: 767px) {
+  /* Evitar desbordamiento horizontal en todas las ventanas */
+  .glass-window,
+  .onotes-window,
+  .osheets-window,
+  .opdf-window,
+  .opics-window,
+  .opaint-window,
+  .omonitor-window,
+  .oplanner-window,
+  .customization-window {
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
+  }
+
+  /* Oxplorer: barra de herramientas adaptable en múltiples filas limpias */
+  .glass-toolbar {
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+    padding: 8px 10px !important;
+  }
+
+  .glass-toolbar .action-buttons {
+    flex-wrap: wrap !important;
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  .glass-toolbar .address-bar,
+  .glass-toolbar .search-wrapper {
+    width: 100% !important;
+    flex: 1 1 100% !important;
+  }
+
+  .window-statusbar {
+    flex-wrap: wrap !important;
+    height: auto !important;
+    min-height: 28px;
+    padding: 4px 10px !important;
+    gap: 4px;
+  }
+
+  /* Onotes y Osheets: barras de herramientas flexibles */
+  .editor-toolbar,
+  .sheets-toolbar {
+    flex-wrap: wrap !important;
+    height: auto !important;
+    gap: 6px !important;
+    padding: 8px 10px !important;
+  }
+
+  /* Opdf y Personalización: paneles laterales colapsados en barra superior scrollable */
+  .opdf-body,
+  .customization-body,
+  .docs-container {
+    flex-direction: column !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+  }
+
+  .opdf-form-panel,
+  .customization-sidebar,
+  .docs-sidebar {
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: 36vh;
+    border-right: none !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    flex-shrink: 0 !important;
+  }
+
+  .customization-sidebar {
+    flex-direction: row !important;
+    overflow-x: auto !important;
+    max-height: none !important;
+    padding: 8px !important;
+    gap: 6px !important;
+  }
+
+  /* Oplanner: cabecera, barra de vistas y drawer adaptados a pantalla estrecha */
+  .oplanner-toolbar {
+    flex-wrap: wrap !important;
+    height: auto !important;
+    padding: 8px 10px !important;
+    gap: 8px !important;
+  }
+
+  .oplanner-toolbar .toolbar-filters {
+    flex-wrap: wrap !important;
+    width: 100% !important;
+  }
+
+  /* Omonitor: pestañas y gráficas en una sola columna sin desbordamiento */
+  .omonitor-nav-tabs {
+    overflow-x: auto !important;
+    flex-wrap: nowrap !important;
+  }
+
+  .charts-grid,
+  .metrics-cards-grid,
+  .telemetry-split-grid {
+    grid-template-columns: 1fr !important;
+  }
 }
 
 /* =========================================================
@@ -172,6 +290,7 @@ body,
 .os-root {
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
   overflow: hidden;

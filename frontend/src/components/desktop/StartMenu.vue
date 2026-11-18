@@ -504,4 +504,19 @@ onUnmounted(() => {
   width: 14px;
   height: 14px;
 }
+
+@media (max-width: 767px) {
+  .start-menu-container {
+    width: calc(100vw - 16px);
+    max-width: calc(100vw - 16px);
+    left: 8px;
+    bottom: 56px;
+    max-height: calc(100dvh - 68px);
+  }
+
+  .start-content-area {
+    overflow-y: auto;
+    max-height: calc(100dvh - 200px);
+  }
+}
 </style>

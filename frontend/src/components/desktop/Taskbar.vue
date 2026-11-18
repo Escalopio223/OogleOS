@@ -229,6 +229,10 @@ function getWindowIcon(id: string): string {
   display: flex;
   align-items: center;
   gap: 12px;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  margin-right: 10px;
 }
 
 .oogle-start-btn {
@@ -237,6 +241,7 @@ function getWindowIcon(id: string): string {
   justify-content: center;
   width: 40px;
   height: 40px;
+  flex-shrink: 0;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.12);
@@ -267,13 +272,27 @@ function getWindowIcon(id: string): string {
 
 .taskbar-apps {
   display: flex;
+  align-items: center;
   gap: 6px;
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.taskbar-apps::-webkit-scrollbar {
+  display: none;
 }
 
 .taskbar-item {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-shrink: 0;
+  white-space: nowrap;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
   padding: 6px 12px;
@@ -297,11 +316,13 @@ function getWindowIcon(id: string): string {
   width: 18px;
   height: 18px;
   object-fit: contain;
+  flex-shrink: 0;
 }
 
 .taskbar-status {
   font-size: 11px;
   color: #a6adc8;
+  flex-shrink: 0;
 }
 
 .tray-actions {

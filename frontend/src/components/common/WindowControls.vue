@@ -31,7 +31,7 @@ function handleClose() {
 </script>
 
 <template>
-  <div class="window-controls-group" @mousedown.stop @dblclick.stop>
+  <div class="window-controls-group" @pointerdown.stop @mousedown.stop @dblclick.stop>
     <!-- Minimizar -->
     <button
       class="win-btn minimize"
@@ -113,5 +113,24 @@ function handleClose() {
   background: #ef4444;
   border-color: #ef4444;
   color: #ffffff;
+}
+
+@media (max-width: 767px), (pointer: coarse) {
+  .window-controls-group {
+    gap: 8px;
+  }
+
+  .win-btn {
+    min-width: 36px;
+    min-height: 36px;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+  }
+
+  .win-btn svg {
+    width: 15px;
+    height: 15px;
+  }
 }
 </style>
