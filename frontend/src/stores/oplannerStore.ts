@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
+import { apiUrl } from '@/config/api';
 import type {
   TaskItem,
   TaskStatus,
@@ -689,7 +690,7 @@ export const useOplannerStore = defineStore('oplanner', () => {
 
       if (currentFileId.value) {
         // Actualizar archivo existente
-        const res = await fetch(`/api/nodes/${currentFileId.value}`, {
+        const res = await fetch(apiUrl(`/api/nodes/${currentFileId.value}`), {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -705,7 +706,7 @@ export const useOplannerStore = defineStore('oplanner', () => {
         currentFileName.value = targetName;
       } else {
         // Crear nuevo archivo en root.desktop
-        const res = await fetch('/api/nodes', {
+        const res = await fetch(apiUrl('/api/nodes'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

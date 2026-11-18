@@ -3,6 +3,7 @@ import { ref, watch } from 'vue';
 import { useWindowStore } from '@/stores/windowStore';
 import { useWindowBounds } from '@/composables/useWindowBounds';
 import { filesystemEvent } from '@/stores/filesystem';
+import { apiUrl } from '@/config/api';
 import opicsSvg from '@/assets/opics.svg';
 import WindowControls from '@/components/common/WindowControls.vue';
 
@@ -42,7 +43,7 @@ function formatBytes(bytes: number = 0): string {
 
 function getImageUrl(img: ImageNode | string): string {
   if (typeof img === 'object' && img?.id) {
-    return `/api/files/${img.id}/raw`;
+    return apiUrl(`/api/files/${img.id}/raw`);
   }
   const name = typeof img === 'object' ? img.name : img;
   return `https://picsum.photos/seed/${encodeURIComponent(name)}/800/600`;
@@ -61,8 +62,8 @@ async function fetchImages(query = '') {
   try {
     const q = query.trim();
     const endpoint = q
-      ? `/api/nodes/images?q=${encodeURIComponent(q)}&limit=150`
-      : `/api/nodes/images?limit=150`;
+      ? apiUrl(`/api/nodes/images?q=${encodeURIComponent(q)}&limit=150`)
+      : apiUrl(`/api/nodes/images?limit=150`);
     const res = await fetch(endpoint);
     if (!res.ok) return;
     const data = await res.json();
@@ -107,7 +108,7 @@ function downloadCurrentImage() {
   const currentImg = images.value[currentImageIndex.value];
   if (currentImg?.id) {
     const a = document.createElement('a');
-    a.href = `/api/files/${currentImg.id}/download`;
+    a.href = apiUrl(`/api/files/${currentImg.id}/download`);
     a.download = currentImg.name;
     document.body.appendChild(a);
     a.click();

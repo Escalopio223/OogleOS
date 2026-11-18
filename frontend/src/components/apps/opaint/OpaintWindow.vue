@@ -3,6 +3,7 @@ import { ref, watch, onMounted, onUnmounted } from 'vue';
 import { useWindowStore } from '@/stores/windowStore';
 import { useWindowBounds } from '@/composables/useWindowBounds';
 import { usePaintStore } from '@/stores/paintStore';
+import { apiUrl } from '@/config/api';
 import opaintSvg from '@/assets/opaint.svg';
 import OpaintCanvas from './OpaintCanvas.vue';
 import OpaintFloatingDock from './OpaintFloatingDock.vue';
@@ -66,7 +67,7 @@ watch(
       let rawContent = newData.content;
       if (!rawContent && newData.fileId) {
         try {
-          const res = await fetch(`/api/files/${newData.fileId}/raw`);
+          const res = await fetch(apiUrl(`/api/files/${newData.fileId}/raw`));
           if (res.ok) {
             rawContent = await res.text();
           }

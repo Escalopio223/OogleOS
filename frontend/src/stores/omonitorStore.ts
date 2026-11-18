@@ -7,6 +7,7 @@ import type {
   TelemetrySummary,
   FileActivityNotification,
 } from '@/types/omonitor';
+import { apiUrl } from '@/config/api';
 
 const SESSION_STORAGE_KEY = 'oogleos_telemetry_session_id';
 
@@ -61,7 +62,7 @@ export const useOmonitorStore = defineStore('omonitor', () => {
     if (!sessionId.value) initSession();
 
     try {
-      const res = await fetch('/api/telemetry/session', {
+      const res = await fetch(apiUrl('/api/telemetry/session'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -92,7 +93,7 @@ export const useOmonitorStore = defineStore('omonitor', () => {
     heartbeatInterval = setInterval(async () => {
       if (!sessionId.value) return;
       try {
-        await fetch('/api/telemetry/heartbeat', {
+        await fetch(apiUrl('/api/telemetry/heartbeat'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ sessionId: sessionId.value }),
@@ -108,7 +109,7 @@ export const useOmonitorStore = defineStore('omonitor', () => {
     if (typeof window === 'undefined' || typeof EventSource === 'undefined') return;
     if (eventSource) return;
 
-    eventSource = new EventSource('/api/system/stream');
+    eventSource = new EventSource(apiUrl('/api/system/stream'));
 
     eventSource.onopen = () => {
       isConnected.value = true;
@@ -195,7 +196,7 @@ export const useOmonitorStore = defineStore('omonitor', () => {
   // Consultar lista completa de sesiones y métricas agregadas
   async function fetchSessions() {
     try {
-      const res = await fetch('/api/telemetry/sessions');
+      const res = await fetch(apiUrl('/api/telemetry/sessions'));
       if (res.ok) {
         const data = await res.json();
         const incomingSessions: TelemetrySessionItem[] = data.sessions || [];
@@ -220,7 +221,7 @@ export const useOmonitorStore = defineStore('omonitor', () => {
   async function reportFileAction(action: 'opened' | 'created' | 'deleted', fileName: string) {
     if (!sessionId.value) initSession();
     try {
-      await fetch('/api/telemetry/file-event', {
+      await fetch(apiUrl('/api/telemetry/file-event'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

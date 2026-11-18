@@ -3,6 +3,7 @@ import { ref, computed, watch } from 'vue';
 import { useWindowStore } from '@/stores/windowStore';
 import { useDesktopStore } from '@/stores/desktopStore';
 import { notifyFilesystemChanged } from '@/stores/filesystem';
+import { apiUrl } from '@/config/api';
 import { useWindowBounds } from '@/composables/useWindowBounds';
 import osheetsSvg from '@/assets/osheets.svg';
 import WindowControls from '@/components/common/WindowControls.vue';
@@ -76,7 +77,7 @@ watch(
         return;
       } else if (newData.fileId) {
         // Cargar desde endpoint raw (soporta CSVs virtuales generados y físicos)
-        fetch(`/api/files/${newData.fileId}/raw`)
+        fetch(apiUrl(`/api/files/${newData.fileId}/raw`))
           .then((res) => (res.ok ? res.text() : ''))
           .then((text) => {
             if (currentFileId.value === newData.fileId) {
@@ -204,7 +205,7 @@ async function saveSheet() {
 
   try {
     if (currentFileId.value) {
-      const res = await fetch(`/api/nodes/${currentFileId.value}`, {
+      const res = await fetch(apiUrl(`/api/nodes/${currentFileId.value}`), {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -220,7 +221,7 @@ async function saveSheet() {
       winStore.windows['osheets'].title = cleanName;
       setSuccessFeedback('Hoja guardada correctamente');
     } else {
-      const res = await fetch('/api/nodes', {
+      const res = await fetch(apiUrl('/api/nodes'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -249,7 +250,7 @@ async function saveSheet() {
 function downloadCsv() {
   if (currentFileId.value) {
     const a = document.createElement('a');
-    a.href = `/api/files/${currentFileId.value}/download`;
+    a.href = apiUrl(`/api/files/${currentFileId.value}/download`);
     a.download = fileName.value;
     document.body.appendChild(a);
     a.click();

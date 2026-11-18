@@ -9,6 +9,7 @@ import {
   triggerHostDownload,
 } from '@/utils/paint/serializer';
 import { notifyFilesystemChanged } from '@/stores/filesystem';
+import { apiUrl } from '@/config/api';
 
 defineProps<{
   isOpen: boolean;
@@ -56,7 +57,7 @@ async function handleConfirmExport() {
         // Guardar en OogleOS VFS
         if (paintStore.projectFileId) {
           // Actualizar archivo existente
-          const res = await fetch(`/api/nodes/${paintStore.projectFileId}`, {
+          const res = await fetch(apiUrl(`/api/nodes/${paintStore.projectFileId}`), {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -67,7 +68,7 @@ async function handleConfirmExport() {
           if (!res.ok) throw new Error('Error al actualizar archivo en OogleOS');
         } else {
           // Crear nuevo nodo en root.desktop
-          const res = await fetch('/api/nodes', {
+          const res = await fetch(apiUrl('/api/nodes'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -109,7 +110,7 @@ async function handleConfirmExport() {
           triggerHostDownload(svgContent, finalFilename);
           statusMessage.value = 'Archivo SVG descargado.';
         } else {
-          const res = await fetch('/api/nodes', {
+          const res = await fetch(apiUrl('/api/nodes'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -136,7 +137,7 @@ async function handleConfirmExport() {
         } else {
           // En OogleOS subimos imágenes como FormData multipart o Base64 DataURL
           const dataUrl = compositeCanvas.toDataURL(mime);
-          const res = await fetch('/api/nodes', {
+          const res = await fetch(apiUrl('/api/nodes'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

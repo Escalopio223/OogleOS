@@ -3,6 +3,7 @@ import { ref, watch, computed } from 'vue';
 import { useWindowStore } from '@/stores/windowStore';
 import { useDesktopStore } from '@/stores/desktopStore';
 import { useFileSystemStore, notifyFilesystemChanged } from '@/stores/filesystem';
+import { apiUrl } from '@/config/api';
 import { useWindowBounds } from '@/composables/useWindowBounds';
 import onotesSvg from '@/assets/onotes.svg';
 import WindowControls from '@/components/common/WindowControls.vue';
@@ -68,7 +69,7 @@ watch(
       }
 
       // Cargar desde endpoint raw de archivos (soporta tanto virtuales deterministas como físicos)
-      fetch(`/api/files/${newData.noteId}/raw`)
+      fetch(apiUrl(`/api/files/${newData.noteId}/raw`))
         .then((res) => (res.ok ? res.text() : ''))
         .then((text) => {
           if (currentNoteId.value === newData.noteId) {
@@ -146,7 +147,7 @@ async function saveFile() {
   try {
     if (currentNoteId.value) {
       // Modificar archivo existente
-      const res = await fetch(`/api/nodes/${currentNoteId.value}`, {
+      const res = await fetch(apiUrl(`/api/nodes/${currentNoteId.value}`), {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -164,7 +165,7 @@ async function saveFile() {
       setSuccessFeedback('Guardado correctamente');
     } else {
       // Crear archivo de texto nuevo en el escritorio (root.desktop)
-      const res = await fetch('/api/nodes', {
+      const res = await fetch(apiUrl('/api/nodes'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

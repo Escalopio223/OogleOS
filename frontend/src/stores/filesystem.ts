@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed, watch } from 'vue'
 import type { FileNode, NodesResponse, SearchResponse } from '@/types/filesystem'
 import { useOmonitorStore } from '@/stores/omonitorStore'
+import { apiUrl } from '@/config/api'
 
 // Evento global reactivo para sincronización inmediata entre Oxplorer y el Escritorio
 export const filesystemEvent = ref(0)
@@ -41,11 +42,11 @@ export const useFileSystemStore = defineStore('filesystem', () => {
     let debounceTimer: ReturnType<typeof setTimeout> | null = null
 
     function getFileRawUrl(id: string): string {
-        return `/api/files/${id}/raw`
+        return apiUrl(`/api/files/${id}/raw`)
     }
 
     function getFileDownloadUrl(id: string): string {
-        return `/api/files/${id}/download`
+        return apiUrl(`/api/files/${id}/download`)
     }
 
     function downloadFile(node: { id: string; name: string }) {
@@ -64,7 +65,7 @@ export const useFileSystemStore = defineStore('filesystem', () => {
     async function initRoot() {
         loading.value = true
         try {
-            const res = await fetch('/api/nodes')
+            const res = await fetch(apiUrl('/api/nodes'))
             const data: NodesResponse = await res.json()
             latency.value = data.took_ms
             dataSource.value = data.source || 'postgres'
@@ -87,7 +88,7 @@ export const useFileSystemStore = defineStore('filesystem', () => {
         }
 
         try {
-            const res = await fetch(`/api/nodes?parentId=${parentId}&page=${targetPage}&limit=100`)
+            const res = await fetch(apiUrl(`/api/nodes?parentId=${parentId}&page=${targetPage}&limit=100`))
             const data: NodesResponse = await res.json()
 
             if (targetPage === 1) {
@@ -122,7 +123,7 @@ export const useFileSystemStore = defineStore('filesystem', () => {
     async function navigateToPath(path: string, targetPage = 1) {
         loading.value = true
         try {
-            const res = await fetch(`/api/nodes?parentPath=${encodeURIComponent(path)}&page=${targetPage}&limit=100`)
+            const res = await fetch(apiUrl(`/api/nodes?parentPath=${encodeURIComponent(path)}&page=${targetPage}&limit=100`))
             if (!res.ok) {
                 return false
             }
@@ -181,7 +182,7 @@ export const useFileSystemStore = defineStore('filesystem', () => {
         storage_path?: string | null
     }): Promise<FileNode | null> {
         try {
-            const res = await fetch('/api/nodes', {
+            const res = await fetch(apiUrl('/api/nodes'), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -218,7 +219,7 @@ export const useFileSystemStore = defineStore('filesystem', () => {
         pos_y: number | null = null
     ): Promise<FileNode | null> {
         try {
-            const res = await fetch(`/api/nodes/${id}`, {
+            const res = await fetch(apiUrl(`/api/nodes/${id}`), {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -240,7 +241,7 @@ export const useFileSystemStore = defineStore('filesystem', () => {
 
     async function deleteNode(id: string): Promise<boolean> {
         try {
-            const res = await fetch(`/api/nodes/${id}`, {
+            const res = await fetch(apiUrl(`/api/nodes/${id}`), {
                 method: 'DELETE',
                 headers: {
                     'x-session-id': omonitor.sessionId,
@@ -257,7 +258,7 @@ export const useFileSystemStore = defineStore('filesystem', () => {
 
     async function renameNode(id: string, newName: string): Promise<FileNode | null> {
         try {
-            const res = await fetch(`/api/nodes/${id}`, {
+            const res = await fetch(apiUrl(`/api/nodes/${id}`), {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name: newName }),
@@ -277,7 +278,7 @@ export const useFileSystemStore = defineStore('filesystem', () => {
 
     async function updateContent(id: string, content: string): Promise<FileNode | null> {
         try {
-            const res = await fetch(`/api/nodes/${id}`, {
+            const res = await fetch(apiUrl(`/api/nodes/${id}`), {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ content }),
@@ -306,7 +307,7 @@ export const useFileSystemStore = defineStore('filesystem', () => {
         debounceTimer = setTimeout(async () => {
             loading.value = true
             try {
-                const res = await fetch(`/api/nodes/search?q=${encodeURIComponent(query)}&limit=50`)
+                const res = await fetch(apiUrl(`/api/nodes/search?q=${encodeURIComponent(query)}&limit=50`))
                 const data: SearchResponse = await res.json()
                 nodes.value = data.nodes
                 latency.value = data.took_ms
@@ -319,7 +320,7 @@ export const useFileSystemStore = defineStore('filesystem', () => {
 
     async function verifyFolderPassword(folderId: string, password: string): Promise<boolean> {
         try {
-            const res = await fetch(`/api/nodes/${folderId}/verify-password`, {
+            const res = await fetch(apiUrl(`/api/nodes/${folderId}/verify-password`), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ password }),
@@ -341,7 +342,7 @@ export const useFileSystemStore = defineStore('filesystem', () => {
         currentPassword?: string
     ): Promise<{ success: boolean; error?: string }> {
         try {
-            const res = await fetch(`/api/nodes/${folderId}`, {
+            const res = await fetch(apiUrl(`/api/nodes/${folderId}`), {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ password, currentPassword }),
@@ -367,7 +368,7 @@ export const useFileSystemStore = defineStore('filesystem', () => {
         currentPassword: string
     ): Promise<{ success: boolean; error?: string }> {
         try {
-            const res = await fetch(`/api/nodes/${folderId}`, {
+            const res = await fetch(apiUrl(`/api/nodes/${folderId}`), {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ password: null, currentPassword }),

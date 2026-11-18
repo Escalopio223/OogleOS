@@ -4,6 +4,7 @@ import { useWindowStore } from '@/stores/windowStore';
 import { useDesktopStore, type DesktopItem } from '@/stores/desktopStore';
 import { useFileSystemStore, notifyFilesystemChanged } from '@/stores/filesystem';
 import { useCustomizationStore } from '@/stores/customizationStore';
+import { apiUrl } from '@/config/api';
 import OxplorerWindow from '@/components/apps/oxplorer/OxplorerWindow.vue';
 import OnotesWindow from '@/components/apps/onotes/OnotesWindow.vue';
 import OsheetsWindow from '@/components/apps/osheets/OsheetsWindow.vue';
@@ -788,7 +789,7 @@ async function onDropOnDesktop(e: DragEvent) {
     try {
       const node = JSON.parse(rawData);
       const freePos = findFreeGridPosition(e.clientX - ICON_WIDTH / 2, e.clientY - ICON_HEIGHT / 2, null);
-      await fetch(`/api/nodes/${node.id}`, {
+      await fetch(apiUrl(`/api/nodes/${node.id}`), {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -811,7 +812,7 @@ async function onDropOnFolderIcon(e: DragEvent, targetFolderId: string) {
     try {
       const node = JSON.parse(rawData);
       if (node.id === targetFolderId) return;
-      await fetch(`/api/nodes/${node.id}`, {
+      await fetch(apiUrl(`/api/nodes/${node.id}`), {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

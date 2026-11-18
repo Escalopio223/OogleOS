@@ -2,6 +2,7 @@ import { defineStore } from 'pinia';
 import { ref, watch } from 'vue';
 import type { FileNode, NodesResponse } from '@/types/filesystem';
 import { filesystemEvent, notifyFilesystemChanged } from '@/stores/filesystem';
+import { apiUrl } from '@/config/api';
 
 export const GRID_OFFSET_X = 20;
 export const GRID_OFFSET_Y = 20;
@@ -157,7 +158,7 @@ export const useDesktopStore = defineStore('desktop', () => {
     async function fetchDesktopItems() {
         loading.value = true;
         try {
-            const res = await fetch('/api/nodes?parentPath=root.desktop&limit=100');
+            const res = await fetch(apiUrl('/api/nodes?parentPath=root.desktop&limit=100'));
             if (!res.ok) return;
             const data: NodesResponse = await res.json();
 
@@ -182,7 +183,7 @@ export const useDesktopStore = defineStore('desktop', () => {
 
             // Guardar en segundo plano las posiciones asignadas o corregidas automáticamente
             for (const saving of needsPositionSaving) {
-                fetch(`/api/nodes/${saving.id}`, {
+                fetch(apiUrl(`/api/nodes/${saving.id}`), {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ pos_x: saving.x, pos_y: saving.y }),
@@ -203,7 +204,7 @@ export const useDesktopStore = defineStore('desktop', () => {
     ): Promise<DesktopItem | null> {
         try {
             const pos = resolveUniqueGridPosition(x, y, items.value, null);
-            const res = await fetch('/api/nodes', {
+            const res = await fetch(apiUrl('/api/nodes'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -239,7 +240,7 @@ export const useDesktopStore = defineStore('desktop', () => {
     ): Promise<DesktopItem | null> {
         try {
             const pos = resolveUniqueGridPosition(x, y, items.value, null);
-            const res = await fetch('/api/nodes', {
+            const res = await fetch(apiUrl('/api/nodes'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -279,7 +280,7 @@ export const useDesktopStore = defineStore('desktop', () => {
             if (!pdfName.toLowerCase().endsWith('.pdf')) {
                 pdfName += '.pdf';
             }
-            const res = await fetch('/api/nodes', {
+            const res = await fetch(apiUrl('/api/nodes'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -319,7 +320,7 @@ export const useDesktopStore = defineStore('desktop', () => {
             if (!paintName.toLowerCase().endsWith('.opaint')) {
                 paintName += '.opaint';
             }
-            const res = await fetch('/api/nodes', {
+            const res = await fetch(apiUrl('/api/nodes'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -359,7 +360,7 @@ export const useDesktopStore = defineStore('desktop', () => {
             if (!plannerName.toLowerCase().endsWith('.oplanner')) {
                 plannerName += '.oplanner';
             }
-            const res = await fetch('/api/nodes', {
+            const res = await fetch(apiUrl('/api/nodes'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -395,7 +396,7 @@ export const useDesktopStore = defineStore('desktop', () => {
     ): Promise<DesktopItem | null> {
         try {
             const pos = resolveUniqueGridPosition(x, y, items.value, null);
-            const res = await fetch('/api/nodes', {
+            const res = await fetch(apiUrl('/api/nodes'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -428,7 +429,7 @@ export const useDesktopStore = defineStore('desktop', () => {
 
         item.name = newName.trim();
         try {
-            await fetch(`/api/nodes/${id}`, {
+            await fetch(apiUrl(`/api/nodes/${id}`), {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name: newName.trim() }),
@@ -442,7 +443,7 @@ export const useDesktopStore = defineStore('desktop', () => {
     async function deleteItem(id: string) {
         items.value = items.value.filter((i) => i.id !== id);
         try {
-            await fetch(`/api/nodes/${id}`, { method: 'DELETE' });
+            await fetch(apiUrl(`/api/nodes/${id}`), { method: 'DELETE' });
             notifyFilesystemChanged();
         } catch {
             await fetchDesktopItems();
@@ -455,7 +456,7 @@ export const useDesktopStore = defineStore('desktop', () => {
             note.content = newContent;
         }
         try {
-            await fetch(`/api/nodes/${id}`, {
+            await fetch(apiUrl(`/api/nodes/${id}`), {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ content: newContent }),
@@ -474,7 +475,7 @@ export const useDesktopStore = defineStore('desktop', () => {
             item.pos_y = validPos.y;
         }
         try {
-            await fetch(`/api/nodes/${id}`, {
+            await fetch(apiUrl(`/api/nodes/${id}`), {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ pos_x: validPos.x, pos_y: validPos.y }),
@@ -485,7 +486,7 @@ export const useDesktopStore = defineStore('desktop', () => {
     async function moveToFolder(itemId: string, targetFolderId: string) {
         items.value = items.value.filter((i) => i.id !== itemId);
         try {
-            await fetch(`/api/nodes/${itemId}`, {
+            await fetch(apiUrl(`/api/nodes/${itemId}`), {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

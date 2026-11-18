@@ -4,6 +4,7 @@ import { useWindowStore } from '@/stores/windowStore';
 import { useWindowBounds } from '@/composables/useWindowBounds';
 import { useDesktopStore } from '@/stores/desktopStore';
 import { notifyFilesystemChanged } from '@/stores/filesystem';
+import { apiUrl } from '@/config/api';
 import { downloadPdfFile, buildStandardPdf, extractPdfData, type PdfDocumentData } from '@/utils/pdfGenerator';
 import opdfSvg from '@/assets/opdf.svg';
 import WindowControls from '@/components/common/WindowControls.vue';
@@ -148,7 +149,7 @@ async function loadExistingPdf(fileId: string) {
   errorMessage.value = '';
 
   try {
-    const res = await fetch(`/api/files/${fileId}/raw`);
+    const res = await fetch(apiUrl(`/api/files/${fileId}/raw`));
     if (!res.ok) throw new Error('Error al cargar archivo PDF');
 
     const arrayBuf = await res.arrayBuffer();
@@ -224,7 +225,7 @@ async function savePdfToSystem() {
 
     if (currentFileId.value) {
       // Actualizar archivo existente
-      const res = await fetch(`/api/nodes/${currentFileId.value}`, {
+      const res = await fetch(apiUrl(`/api/nodes/${currentFileId.value}`), {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -242,7 +243,7 @@ async function savePdfToSystem() {
       setSuccessFeedback('Documento PDF guardado correctamente');
     } else {
       // Crear en Escritorio
-      const res = await fetch('/api/nodes', {
+      const res = await fetch(apiUrl('/api/nodes'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -275,7 +276,7 @@ function triggerDownload() {
   if (currentFileId.value && isSaved.value) {
     // Descarga directa desde endpoint con Content-Disposition nativo
     const a = document.createElement('a');
-    a.href = `/api/files/${currentFileId.value}/download`;
+    a.href = apiUrl(`/api/files/${currentFileId.value}/download`);
     a.download = fileName.value;
     document.body.appendChild(a);
     a.click();
