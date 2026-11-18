@@ -1180,13 +1180,6 @@ async function onDropOnFolderIcon(e: DragEvent, targetFolderId: string) {
   transition: background 0.25s ease-out;
 }
 
-@media (max-width: 767px) and (orientation: portrait) {
-  .desktop-workspace {
-    background-size: contain !important;
-    background-position: center center !important;
-  }
-}
-
 .grid-ghost-cell {
   position: absolute;
   width: 84px;

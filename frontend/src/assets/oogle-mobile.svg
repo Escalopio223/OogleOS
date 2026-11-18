@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1920" width="1080" height="1920" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <!-- Fondo base oscuro elegante estilo OogleOS -->
+    <linearGradient id="bgBase" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#232936" />
+      <stop offset="45%" stop-color="#191e28" />
+      <stop offset="100%" stop-color="#0f131a" />
+    </linearGradient>
+
+    <!-- Ondas suaves superiores e inferiores -->
+    <linearGradient id="waveTop" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2d3546" stop-opacity="0.75" />
+      <stop offset="100%" stop-color="#1c222d" stop-opacity="0.2" />
+    </linearGradient>
+
+    <linearGradient id="waveMid" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#262d3d" stop-opacity="0.65" />
+      <stop offset="100%" stop-color="#141821" stop-opacity="0.4" />
+    </linearGradient>
+
+    <linearGradient id="waveBottom" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#131720" stop-opacity="0.9" />
+      <stop offset="100%" stop-color="#0b0e14" stop-opacity="0.95" />
+    </linearGradient>
+
+    <!-- Resplandores ambientales sutiles con los colores de Oogle -->
+    <radialGradient id="glowBlue" cx="30%" cy="62%" r="45%">
+      <stop offset="0%" stop-color="#4285F4" stop-opacity="0.14" />
+      <stop offset="100%" stop-color="#4285F4" stop-opacity="0" />
+    </radialGradient>
+
+    <radialGradient id="glowRed" cx="72%" cy="58%" r="42%">
+      <stop offset="0%" stop-color="#EA4335" stop-opacity="0.11" />
+      <stop offset="100%" stop-color="#EA4335" stop-opacity="0" />
+    </radialGradient>
+
+    <radialGradient id="glowGreen" cx="55%" cy="74%" r="40%">
+      <stop offset="0%" stop-color="#34A853" stop-opacity="0.1" />
+      <stop offset="100%" stop-color="#34A853" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+
+  <!-- Capa base -->
+  <rect width="1080" height="1920" fill="url(#bgBase)" />
+
+  <!-- Ondas decorativas orgánicas estilo OogleOS -->
+  <path d="M0,0 L1080,0 L1080,620 C820,510 610,740 340,680 C160,640 60,520 0,560 Z" fill="url(#waveTop)" />
+  <path d="M0,480 C280,390 520,610 820,520 C940,485 1020,430 1080,450 L1080,1280 C840,1390 540,1150 260,1270 C130,1325 50,1390 0,1360 Z" fill="url(#waveMid)" />
+  <path d="M0,1290 C310,1180 620,1440 940,1310 C1000,1285 1045,1260 1080,1270 L1080,1920 L0,1920 Z" fill="url(#waveBottom)" />
+
+  <!-- Iluminación ambiental suave -->
+  <rect width="1080" height="1920" fill="url(#glowBlue)" />
+  <rect width="1080" height="1920" fill="url(#glowRed)" />
+  <rect width="1080" height="1920" fill="url(#glowGreen)" />
+
+  <!-- Anillo/Emblema multicolor OogleOS y logotipo "Oogle" centrado en la mitad inferior (libre de iconos) -->
+  <g transform="translate(540, 1180)">
+    <!-- Anillo oficial OogleOS -->
+    <g transform="translate(0, -155) scale(2.8)">
+      <path fill="#EA4335" d="M -14.142 -14.142 A 20 20 0 0 1 14.142 -14.142 L 7.566 -7.566 A 10.7 10.7 0 0 0 -7.566 -7.566 Z"/>
+      <path fill="#4285F4" d="M 14.142 -14.142 A 20 20 0 0 1 14.142 14.142 L 7.566 7.566 A 10.7 10.7 0 0 0 7.566 -7.566 Z"/>
+      <path fill="#34A853" d="M 14.142 14.142 A 20 20 0 0 1 -14.142 14.142 L -7.566 7.566 A 10.7 10.7 0 0 0 7.566 7.566 Z"/>
+      <path fill="#FBBC05" d="M -14.142 14.142 A 20 20 0 0 1 -14.142 -14.142 L -7.566 -7.566 A 10.7 10.7 0 0 0 -7.566 7.566 Z"/>
+    </g>
+
+    <!-- Tipografía "Oogle" proporcionada para ancho móvil vertical -->
+    <text
+      x="0"
+      y="35"
+      text-anchor="middle"
+      font-family="'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
+      font-size="148"
+      font-weight="700"
+      letter-spacing="-3"
+    >
+      <tspan fill="#4285F4">O</tspan><tspan fill="#EA4335">o</tspan><tspan fill="#FBBC05">g</tspan><tspan fill="#34A853">l</tspan><tspan fill="#EA4335">e</tspan>
+    </text>
+
+    <text
+      x="0"
+      y="92"
+      text-anchor="middle"
+      font-family="'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
+      font-size="26"
+      font-weight="600"
+      letter-spacing="10"
+      fill="#94a3b8"
+      opacity="0.7"
+    >
+      WEB OPERATING SYSTEM
+    </text>
+  </g>
+</svg>

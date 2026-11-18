@@ -1,12 +1,15 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import oogleJpg from '@/assets/oogle.jpg';
+import oogleMobileSvg from '@/assets/oogle-mobile.svg';
+import { useDevice } from '@/composables/useDevice';
 
 export interface WallpaperPreset {
   id: string;
   name: string;
   description: string;
   background: string;
+  mobileBackground?: string;
   thumbnailGradient: string;
   isImage?: boolean;
 }
@@ -31,6 +34,7 @@ export const WALLPAPER_PRESETS: WallpaperPreset[] = [
     name: 'Oogle OS Galaxy',
     description: 'Fondo oficial clásico con nebulosa estelar',
     background: `url("${oogleJpg}")`,
+    mobileBackground: `url("${oogleMobileSvg}")`,
     thumbnailGradient: 'radial-gradient(circle at 60% 40%, #4338ca 0%, #1e1b4b 60%, #030712 100%)',
     isImage: true,
   },
@@ -155,6 +159,7 @@ function saveSettings(data: Record<string, any>) {
 
 export const useCustomizationStore = defineStore('customization', () => {
   const saved = loadSavedSettings();
+  const { isMobile } = useDevice();
 
   const theme = ref<'dark' | 'light'>(saved?.theme === 'light' ? 'light' : 'dark');
   const taskbarColor = ref<string>(saved?.taskbarColor || '#11111b');
@@ -171,16 +176,17 @@ export const useCustomizationStore = defineStore('customization', () => {
 
   const wallpaperStyle = computed(() => {
     const wp = activeWallpaper.value;
+    const bgSource = isMobile.value && wp.mobileBackground ? wp.mobileBackground : wp.background;
     if (wp.isImage) {
       return {
-        backgroundImage: wp.background,
+        backgroundImage: bgSource,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
       };
     }
     return {
-      background: wp.background,
+      background: bgSource,
       backgroundSize: 'cover',
       backgroundPosition: 'center',
     };
