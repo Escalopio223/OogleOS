@@ -44,6 +44,8 @@ app.register(cors, {
         }
         cb(new Error('Not allowed by CORS'), false);
     },
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-session-id'],
     credentials: true,
 });
 
@@ -90,18 +92,18 @@ const isLocalDatabaseUrl =
 const pool = new Pool(
     databaseUrl
         ? {
-              connectionString: databaseUrl,
-              ssl: isLocalDatabaseUrl ? false : { rejectUnauthorized: false },
-              max: 20,
-          }
+            connectionString: databaseUrl,
+            ssl: isLocalDatabaseUrl ? false : { rejectUnauthorized: false },
+            max: 20,
+        }
         : {
-              host: process.env.DB_HOST || '127.0.0.1',
-              port: parseInt(process.env.DB_PORT || '5433', 10),
-              user: process.env.DB_USER || 'oogle_user',
-              password: process.env.DB_PASSWORD || 'oogle_pass',
-              database: process.env.DB_NAME || 'oogleos_db',
-              max: 20,
-          }
+            host: process.env.DB_HOST || '127.0.0.1',
+            port: parseInt(process.env.DB_PORT || '5433', 10),
+            user: process.env.DB_USER || 'oogle_user',
+            password: process.env.DB_PASSWORD || 'oogle_pass',
+            database: process.env.DB_NAME || 'oogleos_db',
+            max: 20,
+        }
 );
 
 // Configuración de Redis / Upstash TLS (rediss://) compatible con BullMQ
@@ -111,16 +113,16 @@ const isTlsRedis = Boolean(redisUrl && redisUrl.startsWith('rediss://'));
 function createRedisConnection(lazyConnect = false): Redis {
     const client = redisUrl
         ? new Redis(redisUrl, {
-              maxRetriesPerRequest: null,
-              ...(isTlsRedis ? { tls: {} } : {}),
-              lazyConnect,
-          })
+            maxRetriesPerRequest: null,
+            ...(isTlsRedis ? { tls: {} } : {}),
+            lazyConnect,
+        })
         : new Redis({
-              host: process.env.REDIS_HOST || '127.0.0.1',
-              port: parseInt(process.env.REDIS_PORT || '6379', 10),
-              maxRetriesPerRequest: null,
-              lazyConnect,
-          });
+            host: process.env.REDIS_HOST || '127.0.0.1',
+            port: parseInt(process.env.REDIS_PORT || '6379', 10),
+            maxRetriesPerRequest: null,
+            lazyConnect,
+        });
 
     client.on('error', (err) => {
         console.error('Error de conexión con Redis:', err.message);
@@ -313,7 +315,7 @@ app.get('/api/nodes', async (request, reply) => {
         nodes: rows,
     };
 
-    redis.set(cacheKey, JSON.stringify(payload), 'EX', CACHE_TTL_SECONDS).catch(() => {});
+    redis.set(cacheKey, JSON.stringify(payload), 'EX', CACHE_TTL_SECONDS).catch(() => { });
 
     return payload;
 });
@@ -422,7 +424,7 @@ app.post('/api/nodes', async (request, reply) => {
 
     const clientSessionId = (request.headers['x-session-id'] as string) || '';
     if (clientSessionId && !isDir) {
-        recordFileActivity(clientSessionId, name.trim(), 'created').catch(() => {});
+        recordFileActivity(clientSessionId, name.trim(), 'created').catch(() => { });
     }
 
     return reply.status(201).send(rows[0]);
@@ -618,7 +620,7 @@ app.delete('/api/nodes/:id', async (request, reply) => {
 
     const clientSessionId = (request.headers['x-session-id'] as string) || '';
     if (clientSessionId) {
-        recordFileActivity(clientSessionId, node.name || 'archivo', 'deleted').catch(() => {});
+        recordFileActivity(clientSessionId, node.name || 'archivo', 'deleted').catch(() => { });
     }
 
     return { success: true, deletedId: id };
